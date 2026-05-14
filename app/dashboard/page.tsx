@@ -235,55 +235,73 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-                Hey {firstName}! 👋
-              </h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-2">
-                {userData?.visa_type.toUpperCase()} | {destinationDisplay} 🇬🇧 | {daysUntilDeparture} days to go
-              </p>
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="px-3 py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
-            >
-              Sign Out
-            </button>
-          </div>
+<div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-6">
+    {/* Mobile: Compact */}
+    <div className="sm:hidden">
+      <h1 className="text-xl font-bold text-gray-900">
+        {userData?.email?.split('@')[0]}
+      </h1>
+      <p className="text-xs text-gray-600 mt-1">
+        {userData?.visa_type.toUpperCase()} | {daysUntilDeparture}d
+      </p>
+      <button
+        onClick={handleSignOut}
+        className="absolute top-4 right-4 text-gray-600 text-sm"
+      >
+        Out
+      </button>
+    </div>
 
-          {/* Readiness Card */}
-          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 p-6 rounded-2xl">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Your Readiness</p>
-                <p className="text-4xl font-bold text-indigo-600 mt-1">{readinessPercent}%</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-600">Progress</p>
-                <p className="text-lg font-semibold text-gray-900 mt-1">
-                  {completedTasks}/{totalTasks} tasks
-                </p>
-              </div>
-            </div>
+    {/* Desktop: Full */}
+    <div className="hidden sm:flex justify-between items-start mb-6">
+      <div>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+          Hey {firstName}! 👋
+        </h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-2">
+          {userData?.visa_type.toUpperCase()} | {destinationDisplay} 🇬🇧 | {daysUntilDeparture} days
+        </p>
+      </div>
+      <button
+        onClick={handleSignOut}
+        className="px-3 py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
+      >
+        Sign Out
+      </button>
+    </div>
 
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 h-3 rounded-full transition-all duration-500"
-                style={{ width: `${readinessPercent}%` }}
-              />
-            </div>
-
-            <p className="text-xs text-gray-600 mt-3">
-              {readinessPercent < 50 && '🚀 Keep building momentum!'}
-              {readinessPercent >= 50 && readinessPercent < 80 && '⚡ You\'re on track!'}
-              {readinessPercent >= 80 && '🎉 Almost ready!'}
-            </p>
-          </div>
+    {/* Readiness Card - Same for both but more compact on mobile */}
+    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 p-4 sm:p-6 rounded-xl sm:rounded-2xl">
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <p className="text-xs font-medium text-gray-600">Readiness</p>
+          <p className="text-3xl sm:text-4xl font-bold text-indigo-600 mt-1">{readinessPercent}%</p>
+        </div>
+        <div className="text-right">
+          <p className="text-xs font-medium text-gray-600">Tasks</p>
+          <p className="text-lg sm:text-xl font-semibold text-gray-900 mt-1">
+            {completedTasks}/{totalTasks}
+          </p>
         </div>
       </div>
+
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div
+          className="bg-gradient-to-r from-indigo-600 to-purple-600 h-2 rounded-full transition-all duration-500"
+          style={{ width: `${readinessPercent}%` }}
+        />
+      </div>
+
+      <p className="text-xs text-gray-600 mt-2">
+        {readinessPercent < 50 && '🚀 Keep building!'}
+        {readinessPercent >= 50 && readinessPercent < 80 && '⚡ On track!'}
+        {readinessPercent >= 80 && '🎉 Almost ready!'}
+      </p>
+    </div>
+  </div>
+</div>
+
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Stage Progress Overview */}
