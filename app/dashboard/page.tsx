@@ -74,6 +74,7 @@ export default function Dashboard() {
           .order('stage_id')
           .order('order_num')
 
+        console.log('Fetched tasks:', tasksData?.length)
         setTasks(tasksData || [])
 
         const { data: userTasksData } = await supabase
