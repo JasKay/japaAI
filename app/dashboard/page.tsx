@@ -68,18 +68,15 @@ export default function Dashboard() {
 
         setStages(stagesData || [])
 
+        // Get tasks for this user's visa type
         const { data: tasksData } = await supabase
-          .from('tasks')
-          .select('*')
-          .order('stage_id')
-          .order('order_num')
-
-          console.log('Tasks Error:', tasksError)
-          console.log('Tasks Data:', tasksData)
-          console.log('Task Count:', tasksData?.length)
-
+        .from('tasks')
+        .select('*')
+        .order('stage_id')
+        .order('order_num')
 
         setTasks(tasksData || [])
+
 
         const { data: userTasksData } = await supabase
           .from('user_tasks')
