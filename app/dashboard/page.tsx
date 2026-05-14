@@ -47,13 +47,13 @@ export default function Dashboard() {
         }
         setUser(authUser)
 
-        const { data: userData, error: userError } = await supabase
+        const { data: userData } = await supabase
           .from('users')
           .select('*')
           .eq('id', authUser.id)
           .single()
 
-        if (userError || !userData) {
+        if (!userData) {
           router.push('/onboarding')
           return
         }
@@ -68,15 +68,13 @@ export default function Dashboard() {
 
         setStages(stagesData || [])
 
-        // Get tasks for this user's visa type
         const { data: tasksData } = await supabase
-        .from('tasks')
-        .select('*')
-        .order('stage_id')
-        .order('order_num')
+          .from('tasks')
+          .select('*')
+          .order('stage_id')
+          .order('order_num')
 
         setTasks(tasksData || [])
-
 
         const { data: userTasksData } = await supabase
           .from('user_tasks')
@@ -91,7 +89,6 @@ export default function Dashboard() {
 
         setLoading(false)
       } catch (err) {
-        console.error('Error loading dashboard:', err)
         setLoading(false)
       }
     }
@@ -131,7 +128,7 @@ export default function Dashboard() {
       })
       setUserTasks(newUserTasks)
     } catch (err) {
-      console.error('Error updating task:', err)
+      console.error('Error:', err)
     }
   }
 
@@ -152,13 +149,7 @@ export default function Dashboard() {
   }
 
   if (!userData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <p className="text-gray-600">Setting up your account...</p>
-        </div>
-      </div>
-    )
+    return null
   }
 
   const selectedStageData = stages.find((s) => s.id === selectedStage)
@@ -174,12 +165,10 @@ export default function Dashboard() {
   ).length
   const overallPercent = tasks.length > 0 ? Math.round((totalCompleted / tasks.length) * 100) : 0
 
-  // Get first name for greeting
-   const firstName = userData?.email?.split('@')[0] || 'there'
+  const firstName = userData?.email?.split('@')[0] || 'there'
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex justify-between items-center">
           <div className="flex-1">
@@ -197,21 +186,14 @@ export default function Dashboard() {
           </div>
           <button
             onClick={handleSignOut}
-            className="hidden sm:block px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
+            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
           >
             Sign Out
-          </button>
-          <button
-            onClick={handleSignOut}
-            className="sm:hidden px-3 py-2 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
-          >
-            ⊗
           </button>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Overall Progress */}
         <div className="mb-6 sm:mb-8 bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-100">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">
             Overall Progress
@@ -235,14 +217,9 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
-          {/* Stage Sidebar - Mobile Drawer on small screens */}
-          <div className={`lg:col-span-1 ${sidebarOpen ? 'fixed inset-0 z-40 bg-black/50' : 'hidden lg:block'}`}>
-            <div className={`${sidebarOpen ? 'fixed left-0 top-0 bottom-0 w-64 bg-white overflow-y-auto pt-20' : ''} lg:relative lg:pt-0 bg-white rounded-lg shadow-sm p-4 sticky top-24 border border-gray-100`}>
-              <div className="flex justify-between items-center mb-4 lg:hidden">
-                <h2 className="font-semibold text-gray-900">Stages</h2>
-                <button onClick={() => setSidebarOpen(false)} className="text-2xl text-gray-400">×</button>
-              </div>
-              <h2 className="hidden lg:block font-semibold text-gray-900 mb-4">Stages</h2>
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm p-4 sticky top-24 border border-gray-100">
+              <h2 className="font-semibold text-gray-900 mb-4">Stages</h2>
               <div className="space-y-2">
                 {stages.map((stage) => {
                   const stageTaskCount = tasks.filter((t) => t.stage_id === stage.id).length
@@ -253,10 +230,7 @@ export default function Dashboard() {
                   return (
                     <button
                       key={stage.id}
-                      onClick={() => {
-                        setSelectedStage(stage.id)
-                        setSidebarOpen(false)
-                      }}
+                      onClick={() => setSelectedStage(stage.id)}
                       className={`w-full text-left p-3 rounded-lg transition ${
                         selectedStage === stage.id
                           ? 'bg-indigo-50 border-l-4 border-indigo-600'
@@ -284,18 +258,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* Mobile Stage Toggle */}
-            <div className="lg:hidden mb-6">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
-              >
-                📋 View All Stages
-              </button>
-            </div>
-
             {selectedStageData && (
               <>
                 <div className="bg-white rounded-lg shadow-sm p-4 sm:p-8 mb-6 sm:mb-8 border border-gray-100">
@@ -306,7 +269,6 @@ export default function Dashboard() {
                     {selectedStageData.description}
                   </p>
 
-                  {/* Stage Progress */}
                   <div className="mb-4 sm:mb-6">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-xs sm:text-sm font-medium text-gray-700">
@@ -325,12 +287,11 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Tasks */}
                 <div className="space-y-3 sm:space-y-4">
                   {stageTasks.length === 0 ? (
                     <div className="bg-white rounded-lg shadow-sm p-6 sm:p-8 text-center border border-gray-100">
                       <p className="text-gray-500 text-sm sm:text-base">
-                        No tasks for this stage in your visa category yet.
+                        No tasks yet. Check back soon!
                       </p>
                     </div>
                   ) : (
