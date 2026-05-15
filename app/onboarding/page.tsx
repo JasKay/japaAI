@@ -395,7 +395,7 @@ export default function Onboarding() {
                       <p className="text-sm text-gray-600 mt-2">
                         Go through everything from the beginning. More thorough, but takes longer.
                       </p>
-                      <p className="text-xs text-gray-600 mt-3">Best if you want to double-check nothing</p>
+                      <p className="text-xs text-gray-600 mt-3">Best if you want to double-check everything</p>
                     </div>
                   </div>
                 </button>

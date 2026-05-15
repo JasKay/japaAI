@@ -125,6 +125,19 @@ const colorMap: Record<string, string> = {
   gray: 'text-gray-600 bg-gray-50 border-gray-200',
 }
 
+  // Helper function to get friendly status label
+  const getStatusLabel = (status: string): string => {
+    const labels: Record<string, string> = {
+      researching: 'Researching',
+      preparing: 'Preparing',
+      applying: 'Applying',
+      applied: 'Applied',
+      approved: 'Approved ✅',
+      in_country: 'In Country 🏠',
+    }
+    return labels[status] || 'Unknown'
+  }
+
 
   useEffect(() => {
     const init = async () => {
@@ -306,12 +319,13 @@ const colorMap: Record<string, string> = {
       <div className="flex justify-between items-start mb-3">
         <div>
           <h1 className="text-lg font-bold text-gray-900">Hey {firstName}! 👋</h1>
-          <button
-            onClick={() => setIsEditModalOpen(true)}
-            className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold mt-1"
-          >
-            {userData?.visa_type.toUpperCase()} → {destinationDisplay} (edit)
-          </button>
+                <button
+        onClick={() => setIsEditModalOpen(true)}
+        className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold mt-1"
+      >
+        {userData?.home_country} → {destinationDisplay} | {userData?.visa_type.toUpperCase()} | {getStatusLabel(userData?.onboarding_status)} (edit)
+      </button>
+
         </div>
         <button
           onClick={handleSignOut}
@@ -341,12 +355,13 @@ const colorMap: Record<string, string> = {
     <div className="hidden sm:flex justify-between items-start mb-4">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Hey {firstName}! 👋</h1>
-        <button
+                <button
           onClick={() => setIsEditModalOpen(true)}
           className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold mt-1"
         >
-          {userData?.visa_type.toUpperCase()} → {destinationDisplay} (edit)
+          {userData?.home_country} → {destinationDisplay} | {userData?.visa_type.toUpperCase()} | {getStatusLabel(userData?.onboarding_status)} (edit)
         </button>
+
       </div>
       <button
         onClick={handleSignOut}
