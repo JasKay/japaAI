@@ -74,7 +74,7 @@ export default function Auth() {
         <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12">
           {/* Logo/Brand */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-indigo-600 mb-2">JapaAI</h1>
+            <h1 className="text-4xl font-bold text-indigo-600 mb-2">Aliov</h1>
             <p className="text-xl font-semibold text-gray-900 h-8">
               Move to{' '}
               <span className="text-indigo-600 transition-all duration-500">
