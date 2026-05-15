@@ -46,6 +46,7 @@ export default function StagePage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [userTasks, setUserTasks] = useState<Map<string, UserTask>>(new Map())
   const [loading, setLoading] = useState(true)
+  const [currentTaskIndex, setCurrentTaskIndex] = useState(0)
 
   useEffect(() => {
     const init = async () => {
@@ -80,7 +81,13 @@ export default function StagePage() {
         .select('*')
         .eq('stage_id', stageId)
         .order('order_num')
-      setTasks(tasksData || [])
+      
+      const filteredTasks = tasksData?.filter(t => {
+        const visaMatch = (t.visa_types as any[])?.includes(userData.visa_type) || (t.visa_types as any[])?.includes('all')
+        return visaMatch
+      }) || []
+      
+      setTasks(filteredTasks)
 
       const { data: userTasksData } = await supabase
         .from('user_tasks')
@@ -129,6 +136,11 @@ export default function StagePage() {
         status: newStatus,
       })
       setUserTasks(newUserTasks)
+
+      // Auto-advance to next task if completed
+      if (newStatus === 'completed' && currentTaskIndex < tasks.length - 1) {
+        setTimeout(() => setCurrentTaskIndex(currentTaskIndex + 1), 500)
+      }
     } catch (err) {
       console.error(err)
     }
@@ -139,24 +151,32 @@ export default function StagePage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading stage...</p>
+          <p className="text-gray-600">Loading tasks...</p>
         </div>
       </div>
     )
   }
 
-  if (!stage) {
-    return null
+  if (!stage || tasks.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="px-4 py-4">
+          <button
+            onClick={() => router.back()}
+            className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm"
+          >
+            ← Back
+          </button>
+        </div>
+        <div className="flex items-center justify-center min-h-[calc(100vh-100px)]">
+          <p className="text-gray-500">No tasks available</p>
+        </div>
+      </div>
+    )
   }
 
-  // Filter tasks by visa type
-  const relevantTasks = tasks.filter((t) => {
-    const visaMatch = (t.visa_types as any[])?.includes(userData.visa_type) || (t.visa_types as any[])?.includes('all')
-    return visaMatch
-  })
-
-  const completedCount = relevantTasks.filter((t) => userTasks.get(t.id)?.status === 'completed').length
-  const progressPercent = relevantTasks.length > 0 ? Math.round((completedCount / relevantTasks.length) * 100) : 0
+  const completedCount = tasks.filter((t) => userTasks.get(t.id)?.status === 'completed').length
+  const progressPercent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -165,13 +185,13 @@ export default function StagePage() {
         <div className="px-4 py-4">
           <button
             onClick={() => router.back()}
-            className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm mb-3"
+            className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm mb-3 block"
           >
             ← Back
           </button>
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 mb-4">
             <span className="text-3xl">{STAGE_EMOJIS[stage.id]}</span>
-            <div>
+            <div className="flex-1">
               <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                 {stage.name}
               </h1>
@@ -179,7 +199,9 @@ export default function StagePage() {
             </div>
           </div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-xs font-semibold text-gray-700">Progress</span>
+            <span className="text-xs font-semibold text-gray-700">
+              Task {currentTaskIndex + 1}/{tasks.length}
+            </span>
             <span className="text-sm font-semibold text-indigo-600">{progressPercent}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -191,34 +213,60 @@ export default function StagePage() {
         </div>
       </div>
 
-      {/* Tasks */}
+      {/* Tasks - ONE AT A TIME */}
       <div className="px-4 py-6">
-        {relevantTasks.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No tasks for this stage</p>
+        {currentTaskIndex < tasks.length ? (
+          <div>
+            <TaskCoach
+              task={tasks[currentTaskIndex]}
+              isCompleted={userTasks.get(tasks[currentTaskIndex].id)?.status === 'completed'}
+              onComplete={() =>
+                handleTaskToggle(
+                  tasks[currentTaskIndex].id,
+                  userTasks.get(tasks[currentTaskIndex].id)?.status || 'not_started'
+                )
+              }
+              onToggle={() =>
+                handleTaskToggle(
+                  tasks[currentTaskIndex].id,
+                  userTasks.get(tasks[currentTaskIndex].id)?.status || 'not_started'
+                )
+              }
+              taskNumber={currentTaskIndex + 1}
+              totalTasks={tasks.length}
+            />
+
+            {/* Navigation */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setCurrentTaskIndex(Math.max(0, currentTaskIndex - 1))}
+                disabled={currentTaskIndex === 0}
+                className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg font-semibold transition disabled:opacity-50 text-sm"
+              >
+                ← Previous
+              </button>
+              {currentTaskIndex < tasks.length - 1 && (
+                <button
+                  onClick={() => setCurrentTaskIndex(currentTaskIndex + 1)}
+                  disabled={userTasks.get(tasks[currentTaskIndex].id)?.status !== 'completed'}
+                  className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition disabled:opacity-50 text-sm"
+                >
+                  Next →
+                </button>
+              )}
+            </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            {relevantTasks.map((task, idx) => {
-              const userTask = userTasks.get(task.id)
-              const isCompleted = userTask?.status === 'completed'
-
-              return (
-                <TaskCoach
-                  key={task.id}
-                  task={task}
-                  isCompleted={isCompleted}
-                  onComplete={() =>
-                    handleTaskToggle(task.id, userTask?.status || 'not_started')
-                  }
-                  onToggle={() =>
-                    handleTaskToggle(task.id, userTask?.status || 'not_started')
-                  }
-                  taskNumber={idx + 1}
-                  totalTasks={relevantTasks.length}
-                />
-              )
-            })}
+          <div className="bg-white rounded-2xl shadow-sm p-8 text-center border border-green-200">
+            <p className="text-4xl mb-4">🎉</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Stage Complete!</h2>
+            <p className="text-gray-600 mb-6">You've finished all tasks in this stage.</p>
+            <button
+              onClick={() => router.back()}
+              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold"
+            >
+              Back to Dashboard
+            </button>
           </div>
         )}
       </div>

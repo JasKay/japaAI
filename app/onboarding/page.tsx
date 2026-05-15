@@ -5,33 +5,11 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 const HOME_COUNTRIES = [
-  'Nigeria',
-  'Ghana',
-  'Kenya',
-  'South Africa',
-  'India',
-  'Pakistan',
-  'Bangladesh',
-  'Mexico',
-  'Brazil',
-  'Philippines',
-  'Vietnam',
-  'Indonesia',
+  'Nigeria', 'Ghana', 'Kenya', 'South Africa', 'India', 'Pakistan', 'Bangladesh', 'Mexico', 'Brazil', 'Philippines', 'Vietnam', 'Indonesia',
 ]
 
 const DESTINATION_COUNTRIES = [
-  'UK',
-  'USA',
-  'Canada',
-  'Australia',
-  'Germany',
-  'Netherlands',
-  'Japan',
-  'Singapore',
-  'Dubai',
-  'New Zealand',
-  'Ireland',
-  'Switzerland',
+  'UK', 'USA', 'Canada', 'Australia', 'Germany', 'Netherlands', 'Japan', 'Singapore', 'Dubai', 'New Zealand', 'Ireland', 'Switzerland',
 ]
 
 const VISA_TYPES = [
@@ -42,6 +20,15 @@ const VISA_TYPES = [
   { id: 'entrepreneur', label: 'Entrepreneur Visa', emoji: '🚀' },
 ]
 
+const PROGRESS_STATUSES = [
+  { id: 'researching', label: 'Just starting to research', emoji: '🔍', description: 'I\'m exploring options' },
+  { id: 'preparing', label: 'Preparing documents', emoji: '📋', description: 'Gathering requirements' },
+  { id: 'applying', label: 'Ready to apply', emoji: '📝', description: 'Submitting application soon' },
+  { id: 'applied', label: 'Already applied', emoji: '⏳', description: 'Waiting for decision' },
+  { id: 'approved', label: 'Visa approved', emoji: '✅', description: 'Got my visa!' },
+  { id: 'in_country', label: 'Already here', emoji: '🏠', description: 'I\'ve arrived' },
+]
+
 export default function Onboarding() {
   const [page, setPage] = useState(1)
   const [homeCountry, setHomeCountry] = useState('')
@@ -49,7 +36,8 @@ export default function Onboarding() {
   const [visaType, setVisaType] = useState('')
   const [destinationCity, setDestinationCity] = useState('')
   const [departureDate, setDepartureDate] = useState('')
-  const [currentStage, setCurrentStage] = useState('')
+  const [progressStatus, setProgressStatus] = useState('')
+  const [startFromScratch, setStartFromScratch] = useState(true)
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
@@ -67,13 +55,25 @@ export default function Onboarding() {
   }, [router])
 
   const handleSubmit = async () => {
-    if (!homeCountry || !destinationCountry || !visaType || !destinationCity || !departureDate || !currentStage) {
+    if (!homeCountry || !destinationCountry || !visaType || !destinationCity || !departureDate || !progressStatus) {
       alert('Please fill all fields')
       return
     }
 
     setLoading(true)
     try {
+      // Map progress status to starting stage
+      const statusToStageMap: Record<string, number> = {
+        researching: 1,
+        preparing: 2,
+        applying: 3,
+        applied: 3,
+        approved: 4,
+        in_country: 5,
+      }
+
+      const startingStage = startFromScratch ? 1 : (statusToStageMap[progressStatus] || 1)
+
       const { error } = await supabase.from('users').upsert(
         {
           id: user.id,
@@ -83,7 +83,8 @@ export default function Onboarding() {
           visa_type: visaType,
           destination_city: destinationCity.toLowerCase(),
           expected_departure: departureDate,
-          current_stage: currentStage,
+          current_stage: startingStage,
+          onboarding_status: progressStatus,
         },
         { onConflict: 'id' }
       )
@@ -114,38 +115,31 @@ export default function Onboarding() {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Let's get started</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Let's get you set up</h2>
             <span className="text-sm font-semibold text-indigo-600">
-              {page}/5
+              {page}/6
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className="bg-gradient-to-r from-indigo-600 to-purple-600 h-2 rounded-full transition-all duration-500"
-              style={{ width: `${(page / 5) * 100}%` }}
+              style={{ width: `${(page / 6) * 100}%` }}
             />
           </div>
         </div>
 
         {/* Page Content */}
         <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12">
-          {/* Page 1: Where are you now? */}
+          {/* Page 1 */}
           {page === 1 && (
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Where are you now? 🌍
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Which country are you relocating from?
-              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Where are you from? 🌍</h3>
+              <p className="text-gray-600 mb-6">Which country are you relocating from?</p>
               <div className="grid grid-cols-2 gap-3">
                 {HOME_COUNTRIES.map((country) => (
                   <button
                     key={country}
-                    onClick={() => {
-                      setHomeCountry(country)
-                      setPage(2)
-                    }}
+                    onClick={() => { setHomeCountry(country); setPage(2) }}
                     className={`p-4 rounded-lg border-2 font-semibold transition ${
                       homeCountry === country
                         ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
@@ -159,23 +153,16 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Page 2: Where do you want to go? */}
+          {/* Page 2 */}
           {page === 2 && (
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Where do you want to go? ✈️
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Which country are you moving to?
-              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Where are you going? ✈️</h3>
+              <p className="text-gray-600 mb-6">Which country are you moving to?</p>
               <div className="grid grid-cols-2 gap-3">
                 {DESTINATION_COUNTRIES.map((country) => (
                   <button
                     key={country}
-                    onClick={() => {
-                      setDestinationCountry(country)
-                      setPage(3)
-                    }}
+                    onClick={() => { setDestinationCountry(country); setPage(3) }}
                     className={`p-4 rounded-lg border-2 font-semibold transition ${
                       destinationCountry === country
                         ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
@@ -188,30 +175,23 @@ export default function Onboarding() {
               </div>
               <button
                 onClick={() => setPage(1)}
-                className="mt-6 text-gray-600 hover:text-gray-900 font-semibold"
+                className="mt-6 text-gray-600 hover:text-gray-900 font-semibold text-sm"
               >
                 ← Back
               </button>
             </div>
           )}
 
-          {/* Page 3: Visa Type */}
+          {/* Page 3 */}
           {page === 3 && (
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Which visa are you targeting? 📋
-              </h3>
-              <p className="text-gray-600 mb-6">
-                We'll customize your journey based on this.
-              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Which visa? 📋</h3>
+              <p className="text-gray-600 mb-6">What type of visa are you targeting?</p>
               <div className="space-y-3">
                 {VISA_TYPES.map((visa) => (
                   <button
                     key={visa.id}
-                    onClick={() => {
-                      setVisaType(visa.id)
-                      setPage(4)
-                    }}
+                    onClick={() => { setVisaType(visa.id); setPage(4) }}
                     className={`w-full p-4 rounded-lg border-2 font-semibold transition text-left flex items-center gap-3 ${
                       visaType === visa.id
                         ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
@@ -225,110 +205,154 @@ export default function Onboarding() {
               </div>
               <button
                 onClick={() => setPage(2)}
-                className="mt-6 text-gray-600 hover:text-gray-900 font-semibold"
+                className="mt-6 text-gray-600 hover:text-gray-900 font-semibold text-sm"
               >
                 ← Back
               </button>
             </div>
           )}
 
-          {/* Page 4: City + Date */}
+          {/* Page 4 */}
           {page === 4 && (
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                When are you planning to move? 📅
-              </h3>
-              <p className="text-gray-600 mb-6">
-                This helps us create your personalized timeline.
-              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Details 📅</h3>
+              <p className="text-gray-600 mb-6">Tell us when and where</p>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Which city in {destinationCountry}?
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">City in {destinationCountry}</label>
                   <input
                     type="text"
                     value={destinationCity}
                     onChange={(e) => setDestinationCity(e.target.value)}
-                    placeholder="e.g., London, New York, Sydney"
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-600 outline-none transition"
+                    placeholder="e.g., London, New York"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-600 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Expected departure date
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Departure date</label>
                   <input
                     type="date"
                     value={departureDate}
                     onChange={(e) => setDepartureDate(e.target.value)}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-600 outline-none transition"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-600 outline-none"
                   />
                 </div>
               </div>
 
-              <button
-                onClick={() => setPage(5)}
-                className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition"
-              >
-                Next →
-              </button>
-              <button
-                onClick={() => setPage(3)}
-                className="mt-3 text-gray-600 hover:text-gray-900 font-semibold"
-              >
-                ← Back
-              </button>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setPage(3)}
+                  className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg font-semibold"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={() => setPage(5)}
+                  className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold"
+                >
+                  Next →
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Page 5: Current Stage */}
+          {/* Page 5 - Progress Status */}
           {page === 5 && (
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                Where are you in the process? 🎯
-              </h3>
-              <p className="text-gray-600 mb-6">
-                We'll show you what's next.
-              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Where are you in the journey? 🎯</h3>
+              <p className="text-gray-600 mb-6">This helps us customize your experience</p>
               <div className="space-y-3">
-                {[
-                  { id: 'researching', label: 'Still researching', emoji: '🔍' },
-                  { id: 'applying', label: 'Ready to apply', emoji: '📝' },
-                  { id: 'approved', label: 'Visa approved', emoji: '✅' },
-                  { id: 'flight_booked', label: 'Flight booked', emoji: '✈️' },
-                  { id: 'in_country', label: 'Already here', emoji: '🏠' },
-                ].map((stage) => (
+                {PROGRESS_STATUSES.map((status) => (
                   <button
-                    key={stage.id}
-                    onClick={() => setCurrentStage(stage.id)}
-                    className={`w-full p-4 rounded-lg border-2 font-semibold transition text-left flex items-center gap-3 ${
-                      currentStage === stage.id
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                        : 'border-gray-200 hover:border-indigo-300 text-gray-900'
+                    key={status.id}
+                    onClick={() => setProgressStatus(status.id)}
+                    className={`w-full p-4 rounded-lg border-2 transition text-left ${
+                      progressStatus === status.id
+                        ? 'border-indigo-600 bg-indigo-50'
+                        : 'border-gray-200 hover:border-indigo-300'
                     }`}
                   >
-                    <span className="text-2xl">{stage.emoji}</span>
-                    <span>{stage.label}</span>
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">{status.emoji}</span>
+                      <div>
+                        <p className={`font-semibold ${progressStatus === status.id ? 'text-indigo-700' : 'text-gray-900'}`}>
+                          {status.label}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-1">{status.description}</p>
+                      </div>
+                    </div>
                   </button>
                 ))}
               </div>
 
               <button
-                onClick={handleSubmit}
-                disabled={loading}
-                className="mt-6 w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
-              >
-                {loading ? 'Setting up...' : 'Let\'s go! 🚀'}
-              </button>
-              <button
                 onClick={() => setPage(4)}
-                className="mt-3 text-gray-600 hover:text-gray-900 font-semibold"
+                className="mt-6 text-gray-600 hover:text-gray-900 font-semibold text-sm"
               >
                 ← Back
               </button>
+            </div>
+          )}
+
+          {/* Page 6 - Confirm approach */}
+          {page === 6 && (
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Let's personalize your path 🚀</h3>
+              <p className="text-gray-600 mb-6">
+                You said you're at: <span className="font-semibold text-indigo-600">{PROGRESS_STATUSES.find(s => s.id === progressStatus)?.label}</span>
+              </p>
+
+              <div className="space-y-4 mb-8">
+                <button
+                  onClick={() => setStartFromScratch(true)}
+                  className={`w-full p-6 rounded-lg border-2 text-left transition ${
+                    startFromScratch
+                      ? 'border-indigo-600 bg-indigo-50'
+                      : 'border-gray-200 hover:border-indigo-300'
+                  }`}
+                >
+                  <p className={`font-semibold text-lg ${startFromScratch ? 'text-indigo-700' : 'text-gray-900'}`}>
+                    Start from scratch ✨
+                  </p>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Follow our complete roadmap from the beginning. (Recommended for thoroughness)
+                  </p>
+                </button>
+
+                <button
+                  onClick={() => setStartFromScratch(false)}
+                  className={`w-full p-6 rounded-lg border-2 text-left transition ${
+                    !startFromScratch
+                      ? 'border-indigo-600 bg-indigo-50'
+                      : 'border-gray-200 hover:border-indigo-300'
+                  }`}
+                >
+                  <p className={`font-semibold text-lg ${!startFromScratch ? 'text-indigo-700' : 'text-gray-900'}`}>
+                    Start from where I am 📍
+                  </p>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Jump to the relevant stage based on your progress. (Faster if you're already ahead)
+                  </p>
+                </button>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setPage(5)}
+                  className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg font-semibold"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-semibold disabled:opacity-50"
+                >
+                  {loading ? 'Setting up...' : 'Let\'s go! 🚀'}
+                </button>
+              </div>
             </div>
           )}
         </div>

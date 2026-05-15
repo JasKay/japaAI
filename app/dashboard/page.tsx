@@ -386,42 +386,44 @@ const colorMap: Record<string, string> = {
 
         {/* Main Content */}
               {/* MOBILE: Only show stage buttons, NO tasks */}
-      {selectedStage && (
-        <div className="sm:hidden max-w-7xl mx-auto px-4 py-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Your Journey</h2>
-          <div className="grid grid-cols-3 gap-2">
-            {stages.map((stage) => {
-              const stageProgress = stageProgressMap[stage.id] || 0
-              const previousStageId = stage.id - 1
-              const previousStageProgress = previousStageId >= 1 ? stageProgressMap[previousStageId] : 100
-              const isLocked = stage.id > selectedStage && previousStageProgress < 80
+      {/* MOBILE: Only show stage buttons */}
+{selectedStage && (
+  <div className="sm:hidden max-w-7xl mx-auto px-4 py-6">
+    <h2 className="text-lg font-bold text-gray-900 mb-4">Your Journey</h2>
+    <div className="grid grid-cols-2 gap-2">
+      {stages.map((stage) => {
+        const stageProgress = stageProgressMap[stage.id] || 0
+        const previousStageId = stage.id - 1
+        const previousStageProgress = previousStageId >= 1 ? stageProgressMap[previousStageId] : 100
+        const isLocked = stage.id > selectedStage && previousStageProgress < 80
 
-              return (
-                <button
-                  key={stage.id}
-                  onClick={() => !isLocked && router.push(`/dashboard/stage/${stage.id}`)}
-                  disabled={isLocked}
-                  className={`p-3 rounded-lg border-2 transition text-center ${
-                    isLocked
-                      ? 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-200'
-                      : 'bg-white border-gray-200 hover:border-indigo-300'
-                  }`}
-                >
-                  <div className="text-2xl mb-1">{isLocked ? '🔒' : STAGE_EMOJIS[stage.id]}</div>
-                  <p className="text-xs font-semibold text-gray-900 mb-1">{stage.name.split(' ')[0]}</p>
-                  <div className="w-full bg-gray-200 rounded-full h-1">
-                    <div
-                      className="bg-indigo-600 h-1 rounded-full"
-                      style={{ width: `${stageProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">{stageProgress}%</p>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      )}
+        return (
+          <button
+            key={stage.id}
+            onClick={() => !isLocked && router.push(`/dashboard/stage/${stage.id}`)}
+            disabled={isLocked}
+            className={`p-3 rounded-lg border-2 transition text-center ${
+              isLocked
+                ? 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-200'
+                : 'bg-white border-gray-200 hover:border-indigo-300'
+            }`}
+          >
+            <div className="text-2xl mb-2">{isLocked ? '🔒' : STAGE_EMOJIS[stage.id]}</div>
+            <p className="text-xs font-semibold text-gray-900">{stage.name}</p>
+            <div className="w-full bg-gray-200 rounded-full h-1 mt-2">
+              <div
+                className="bg-indigo-600 h-1 rounded-full"
+                style={{ width: `${stageProgress}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">{stageProgress}%</p>
+          </button>
+        )
+      })}
+    </div>
+  </div>
+)}
+
 
       {/* DESKTOP: Show both stages and tasks */}
       <div className="hidden sm:block max-w-7xl mx-auto px-4 sm:px-6 py-8">
