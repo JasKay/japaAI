@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import TaskCoach from '@/app/components/TaskCoach'
+import EditProfileModal from '@/app/components/EditProfileModal'
+
 
 
 interface Stage {
@@ -62,7 +64,67 @@ export default function Dashboard() {
   const [selectedStage, setSelectedStage] = useState<number | null>(null)
   const [expandedTask, setExpandedTask] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const router = useRouter()
+
+  const getDepartureDateColor = () => {
+  if (!userData?.expected_departure) return 'gray'
+  
+  const departureDate = new Date(userData.expected_departure)
+  const today = new Date()
+  const daysUntil = Math.ceil((departureDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  
+  if (daysUntil < 0) return 'red' // Past date
+  if (daysUntil < 14) return 'red' // Too soon
+  if (daysUntil < 30) return 'yellow' // Tight
+  if (daysUntil < 90) return 'blue' // Good
+  return 'green' // Plenty of time
+}
+
+const getDepartureDateWarning = () => {
+  if (!userData?.expected_departure) return null
+  
+  const departureDate = new Date(userData.expected_departure)
+  const today = new Date()
+  const daysUntil = Math.ceil((departureDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  
+  if (daysUntil < 0) {
+    return '⚠️ Your date is in the past. Something\'s wrong. Update it.'
+  }
+  
+  if (daysUntil < 14) {
+    return '⚠️ Very soon (< 2 weeks). Visa processing alone takes 3-8 weeks. Risky timeline.'
+  }
+  
+  if (daysUntil < 30) {
+    return '⚠️ Tight timeline (< 1 month). Doable but stressful. Consider pushing date.'
+  }
+  
+  if (daysUntil < 60) {
+    return '✓ Good timeline. Enough time for most visas.'
+  }
+  
+  return '✓ Plenty of time. You\'re well-prepared.'
+}
+
+const handleRefreshUserData = async () => {
+  const { data } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+  if (data) setUserData(data)
+}
+
+const colorClass = getDepartureDateColor()
+const colorMap: Record<string, string> = {
+  red: 'text-red-600 bg-red-50 border-red-200',
+  yellow: 'text-yellow-700 bg-yellow-50 border-yellow-200',
+  blue: 'text-blue-600 bg-blue-50 border-blue-200',
+  green: 'text-green-600 bg-green-50 border-green-200',
+  gray: 'text-gray-600 bg-gray-50 border-gray-200',
+}
+
 
   useEffect(() => {
     const init = async () => {
@@ -235,76 +297,215 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
+
+{/* Header - COMPACT with Edit Button */}
 <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-6">
-    {/* Mobile: Compact */}
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+    {/* Mobile Header */}
     <div className="sm:hidden">
-      <h1 className="text-xl font-bold text-gray-900">
-        Hey {firstName}! 👋
-      </h1>
-      <p className="text-xs text-gray-600 mt-1">
-        {userData?.visa_type.toUpperCase()} | {destinationDisplay} 🇬🇧 |  {daysUntilDeparture}d
-      </p>
-      <button
-        onClick={handleSignOut}
-        className="absolute top-4 right-4 text-gray-600 text-sm"
-      >
-        Out
-      </button>
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h1 className="text-lg font-bold text-gray-900">Hey {firstName}! 👋</h1>
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold mt-1"
+          >
+            {userData?.visa_type.toUpperCase()} → {destinationDisplay} (edit)
+          </button>
+        </div>
+        <button
+          onClick={handleSignOut}
+          className="text-xs text-gray-600 hover:text-gray-900"
+        >
+          Sign out
+        </button>
+      </div>
+
+      {/* Readiness bar - mobile */}
+      <div className={`border p-3 rounded-lg ${colorMap[getDepartureDateColor()]}`}>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-xs font-semibold">Readiness</span>
+          <span className="text-sm font-bold">{readinessPercent}%</span>
+        </div>
+        <div className="w-full bg-gray-300 rounded-full h-1.5">
+          <div
+            className="bg-indigo-600 h-1.5 rounded-full"
+            style={{ width: `${readinessPercent}%` }}
+          />
+        </div>
+        <p className="text-xs mt-2 opacity-90">{getDepartureDateWarning()}</p>
+      </div>
     </div>
 
-    {/* Desktop: Full */}
-    <div className="hidden sm:flex justify-between items-start mb-6">
+    {/* Desktop Header */}
+    <div className="hidden sm:flex justify-between items-start mb-4">
       <div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-          Hey {firstName}! 👋
-        </h1>
-        <p className="text-sm sm:text-base text-gray-600 mt-2">
-          {userData?.visa_type.toUpperCase()} | {destinationDisplay} 🇬🇧 | {daysUntilDeparture} days
-        </p>
+        <h1 className="text-2xl font-bold text-gray-900">Hey {firstName}! 👋</h1>
+        <button
+          onClick={() => setIsEditModalOpen(true)}
+          className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold mt-1"
+        >
+          {userData?.visa_type.toUpperCase()} → {destinationDisplay} (edit)
+        </button>
       </div>
       <button
         onClick={handleSignOut}
-        className="px-3 py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
+        className="text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 px-3 py-2 rounded"
       >
         Sign Out
       </button>
     </div>
 
-    {/* Readiness Card - Same for both but more compact on mobile */}
-    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 p-4 sm:p-6 rounded-xl sm:rounded-2xl">
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <p className="text-xs font-medium text-gray-600">Readiness</p>
-          <p className="text-3xl sm:text-4xl font-bold text-indigo-600 mt-1">{readinessPercent}%</p>
+    {/* Readiness Card - Desktop */}
+    <div className="hidden sm:block">
+      <div className={`border-2 p-4 rounded-lg ${colorMap[getDepartureDateColor()]}`}>
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <p className="text-xs font-medium opacity-75">Readiness</p>
+            <p className="text-3xl font-bold">{readinessPercent}%</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs font-medium opacity-75">Timeline</p>
+            <p className="text-lg font-semibold">{daysUntilDeparture}d</p>
+          </div>
         </div>
-        <div className="text-right">
-          <p className="text-xs font-medium text-gray-600">Tasks</p>
-          <p className="text-lg sm:text-xl font-semibold text-gray-900 mt-1">
-            {completedTasks}/{totalTasks}
-          </p>
+        <div className="w-full bg-gray-300 rounded-full h-2 mb-2">
+          <div
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 h-2 rounded-full"
+            style={{ width: `${readinessPercent}%` }}
+          />
         </div>
+        <p className="text-xs opacity-90">{getDepartureDateWarning()}</p>
       </div>
-
-      <div className="w-full bg-gray-200 rounded-full h-2">
-        <div
-          className="bg-gradient-to-r from-indigo-600 to-purple-600 h-2 rounded-full transition-all duration-500"
-          style={{ width: `${readinessPercent}%` }}
-        />
-      </div>
-
-      <p className="text-xs text-gray-600 mt-2">
-        {readinessPercent < 50 && '🚀 Keep building!'}
-        {readinessPercent >= 50 && readinessPercent < 80 && '⚡ On track!'}
-        {readinessPercent >= 80 && '🎉 Almost ready!'}
-      </p>
     </div>
   </div>
 </div>
 
+{/* On MOBILE: Show stage buttons only, clicking navigates to stage page */}
+<div className="sm:hidden max-w-7xl mx-auto px-4 py-6">
+  <h2 className="text-lg font-bold text-gray-900 mb-4">Your Journey</h2>
+  <div className="grid grid-cols-3 gap-2">
+    {stages.map((stage) => {
+      const stageProgress = stageProgressMap[stage.id] || 0
+
+      return (
+        <button
+          key={stage.id}
+          onClick={() => router.push(`/dashboard/stage/${stage.id}`)}
+          className="p-3 rounded-lg bg-white border-2 border-gray-200 hover:border-indigo-300 transition text-center"
+        >
+          <div className="text-2xl mb-1">{STAGE_EMOJIS[stage.id]}</div>
+          <p className="text-xs font-semibold text-gray-900 mb-1">Stage {stage.id}</p>
+          <div className="w-full bg-gray-200 rounded-full h-1">
+            <div
+              className="bg-indigo-600 h-1 rounded-full"
+              style={{ width: `${stageProgress}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-1">{stageProgress}%</p>
+        </button>
+      )
+    })}
+  </div>
+</div>
+
+
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {/* Stage Progress Overview */}
+        {/* Stage Progress Overview - GATED */}
+<div className="mb-8">
+  <h2 className="text-lg font-bold text-gray-900 mb-4">Your Journey</h2>
+  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+    {stages.map((stage) => {
+      const colors = STAGE_COLORS[stage.id]
+      const isActive = selectedStage === stage.id
+      const stageProgress = stageProgressMap[stage.id] || 0
+      const isLocked = stage.id > selectedStage // GATE: Can't access future stages
+      const previousStageProgress = stage.id > 1 ? stageProgressMap[stage.id - 1] : 100
+      const canUnlock = previousStageProgress >= 80 // Unlock when previous 80% done
+
+      return (
+        <div key={stage.id}>
+          <button
+            onClick={() => !isLocked && setSelectedStage(stage.id)}
+            disabled={isLocked && !canUnlock}
+            className={`w-full p-4 rounded-xl border-2 transition ${
+              isLocked && !canUnlock
+                ? 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-200'
+                : isActive
+                  ? `${colors.bg} border-indigo-600 ring-2 ${colors.ring}`
+                  : `bg-white border-gray-200 hover:border-indigo-300`
+            }`}
+          >
+            <div className="text-2xl mb-2">
+              {isLocked && !canUnlock ? '🔒' : STAGE_EMOJIS[stage.id]}
+            </div>
+            <p className="text-xs font-semibold text-gray-900 mb-2">
+              Stage {stage.id}
+            </p>
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
+              <div
+                className="bg-indigo-600 h-1.5 rounded-full transition-all"
+                style={{ width: `${stageProgress}%` }}
+              />
+            </div>
+            <p className="text-xs text-gray-500 mt-2">{stageProgress}%</p>
+            {isLocked && !canUnlock && (
+              <p className="text-xs text-gray-400 mt-1">
+                {Math.ceil(80 - previousStageProgress)}% more to unlock
+              </p>
+            )}
+          </button>
+        </div>
+      )
+    })}
+  </div>
+</div>
+
+
+        {/* Main Content */}
+              {/* MOBILE: Only show stage buttons, NO tasks */}
+      {selectedStage && (
+        <div className="sm:hidden max-w-7xl mx-auto px-4 py-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Your Journey</h2>
+          <div className="grid grid-cols-3 gap-2">
+            {stages.map((stage) => {
+              const stageProgress = stageProgressMap[stage.id] || 0
+              const previousStageId = stage.id - 1
+              const previousStageProgress = previousStageId >= 1 ? stageProgressMap[previousStageId] : 100
+              const isLocked = stage.id > selectedStage && previousStageProgress < 80
+
+              return (
+                <button
+                  key={stage.id}
+                  onClick={() => !isLocked && router.push(`/dashboard/stage/${stage.id}`)}
+                  disabled={isLocked}
+                  className={`p-3 rounded-lg border-2 transition text-center ${
+                    isLocked
+                      ? 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-200'
+                      : 'bg-white border-gray-200 hover:border-indigo-300'
+                  }`}
+                >
+                  <div className="text-2xl mb-1">{isLocked ? '🔒' : STAGE_EMOJIS[stage.id]}</div>
+                  <p className="text-xs font-semibold text-gray-900 mb-1">{stage.name.split(' ')[0]}</p>
+                  <div className="w-full bg-gray-200 rounded-full h-1">
+                    <div
+                      className="bg-indigo-600 h-1 rounded-full"
+                      style={{ width: `${stageProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">{stageProgress}%</p>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* DESKTOP: Show both stages and tasks */}
+      <div className="hidden sm:block max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {/* Stage Progress Overview - GATED */}
         <div className="mb-8">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Your Journey</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -312,20 +513,29 @@ export default function Dashboard() {
               const colors = STAGE_COLORS[stage.id]
               const isActive = selectedStage === stage.id
               const stageProgress = stageProgressMap[stage.id] || 0
+              const previousStageId = stage.id - 1
+              const previousStageProgress = previousStageId >= 1 ? stageProgressMap[previousStageId] : 100
+              const isLocked = stage.id > selectedStage && previousStageProgress < 80
+              const canUnlock = previousStageProgress >= 80
 
               return (
                 <button
                   key={stage.id}
-                  onClick={() => setSelectedStage(stage.id)}
+                  onClick={() => !isLocked && setSelectedStage(stage.id)}
+                  disabled={isLocked && !canUnlock}
                   className={`p-4 rounded-xl border-2 transition ${
-                    isActive
-                      ? `${colors.bg} border-indigo-600 ring-2 ${colors.ring}`
-                      : `bg-white border-gray-200 hover:border-indigo-300`
+                    isLocked && !canUnlock
+                      ? 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-200'
+                      : isActive
+                        ? `${colors.bg} border-indigo-600 ring-2 ${colors.ring}`
+                        : `bg-white border-gray-200 hover:border-indigo-300`
                   }`}
                 >
-                  <div className="text-2xl mb-2">{STAGE_EMOJIS[stage.id]}</div>
+                  <div className="text-2xl mb-2">
+                    {isLocked && !canUnlock ? '🔒' : STAGE_EMOJIS[stage.id]}
+                  </div>
                   <p className="text-xs font-semibold text-gray-900 mb-2">
-                    Stage {stage.id}
+                    {stage.name}
                   </p>
                   <div className="w-full bg-gray-200 rounded-full h-1.5">
                     <div
@@ -334,15 +544,19 @@ export default function Dashboard() {
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-2">{stageProgress}%</p>
+                  {isLocked && !canUnlock && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {Math.ceil(80 - previousStageProgress)}% more
+                    </p>
+                  )}
                 </button>
               )
             })}
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Tasks - DESKTOP ONLY */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar - Stage Details */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 sticky top-32">
               {selectedStageData && (
@@ -377,7 +591,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Main Tasks Area */}
           <div className="lg:col-span-3">
             {selectedStageData && (
               <>
@@ -389,33 +602,38 @@ export default function Dashboard() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {stageTasks.map((task, idx) => {
-  const userTask = userTasks.get(task.id)
-  const isCompleted = userTask?.status === 'completed'
-
-  return (
-    <TaskCoach
-      key={task.id}
-      task={task}
-      isCompleted={isCompleted}
-      onComplete={() =>
-        handleTaskToggle(task.id, userTask?.status || 'not_started')
-      }
-      onToggle={() =>
-        handleTaskToggle(task.id, userTask?.status || 'not_started')
-      }
-      taskNumber={idx + 1}
-      totalTasks={stageTasks.length}
-    />
-  )
-})}
-
+                    {stageTasks.map((task, idx) => (
+                      <TaskCoach
+                        key={task.id}
+                        task={task}
+                        isCompleted={userTasks.get(task.id)?.status === 'completed'}
+                        onComplete={() =>
+                          handleTaskToggle(task.id, userTasks.get(task.id)?.status || 'not_started')
+                        }
+                        onToggle={() =>
+                          handleTaskToggle(task.id, userTasks.get(task.id)?.status || 'not_started')
+                        }
+                        taskNumber={idx + 1}
+                        totalTasks={stageTasks.length}
+                      />
+                    ))}
                   </div>
                 )}
               </>
             )}
           </div>
         </div>
+      </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        userData={userData}
+        userId={user?.id}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={handleRefreshUserData}
+      />
+
       </div>
     </div>
   )
