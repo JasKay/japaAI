@@ -381,88 +381,8 @@ const colorMap: Record<string, string> = {
   </div>
 </div>
 
-{/* On MOBILE: Show stage buttons only, clicking navigates to stage page */}
-<div className="sm:hidden max-w-7xl mx-auto px-4 py-6">
-  <h2 className="text-lg font-bold text-gray-900 mb-4">Your Journey</h2>
-  <div className="grid grid-cols-3 gap-2">
-    {stages.map((stage) => {
-      const stageProgress = stageProgressMap[stage.id] || 0
-
-      return (
-        <button
-          key={stage.id}
-          onClick={() => router.push(`/dashboard/stage/${stage.id}`)}
-          className="p-3 rounded-lg bg-white border-2 border-gray-200 hover:border-indigo-300 transition text-center"
-        >
-          <div className="text-2xl mb-1">{STAGE_EMOJIS[stage.id]}</div>
-          <p className="text-xs font-semibold text-gray-900 mb-1">Stage {stage.id}</p>
-          <div className="w-full bg-gray-200 rounded-full h-1">
-            <div
-              className="bg-indigo-600 h-1 rounded-full"
-              style={{ width: `${stageProgress}%` }}
-            />
-          </div>
-          <p className="text-xs text-gray-500 mt-1">{stageProgress}%</p>
-        </button>
-      )
-    })}
-  </div>
-</div>
-
-
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Stage Progress Overview */}
-        {/* Stage Progress Overview - GATED */}
-<div className="mb-8">
-  <h2 className="text-lg font-bold text-gray-900 mb-4">Your Journey</h2>
-  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-    {stages.map((stage) => {
-      const colors = STAGE_COLORS[stage.id]
-      const isActive = selectedStage === stage.id
-      const stageProgress = stageProgressMap[stage.id] || 0
-      const isLocked = stage.id > selectedStage // GATE: Can't access future stages
-      const previousStageProgress = stage.id > 1 ? stageProgressMap[stage.id - 1] : 100
-      const canUnlock = previousStageProgress >= 80 // Unlock when previous 80% done
-
-      return (
-        <div key={stage.id}>
-          <button
-            onClick={() => !isLocked && setSelectedStage(stage.id)}
-            disabled={isLocked && !canUnlock}
-            className={`w-full p-4 rounded-xl border-2 transition ${
-              isLocked && !canUnlock
-                ? 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-200'
-                : isActive
-                  ? `${colors.bg} border-indigo-600 ring-2 ${colors.ring}`
-                  : `bg-white border-gray-200 hover:border-indigo-300`
-            }`}
-          >
-            <div className="text-2xl mb-2">
-              {isLocked && !canUnlock ? '🔒' : STAGE_EMOJIS[stage.id]}
-            </div>
-            <p className="text-xs font-semibold text-gray-900 mb-2">
-              Stage {stage.id}
-            </p>
-            <div className="w-full bg-gray-200 rounded-full h-1.5">
-              <div
-                className="bg-indigo-600 h-1.5 rounded-full transition-all"
-                style={{ width: `${stageProgress}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-2">{stageProgress}%</p>
-            {isLocked && !canUnlock && (
-              <p className="text-xs text-gray-400 mt-1">
-                {Math.ceil(80 - previousStageProgress)}% more to unlock
-              </p>
-            )}
-          </button>
-        </div>
-      )
-    })}
-  </div>
-</div>
-
 
         {/* Main Content */}
               {/* MOBILE: Only show stage buttons, NO tasks */}
