@@ -54,6 +54,32 @@ export default function Onboarding() {
     getUser()
   }, [router])
 
+    // Helper function to map progress status to starting stage
+  const statusToStageMap = (status: string): number => {
+    const map: Record<string, number> = {
+      researching: 1,
+      preparing: 2,
+      applying: 3,
+      applied: 3,
+      approved: 4,
+      in_country: 5,
+    }
+    return map[status] || 1
+  }
+
+  // Helper function to get friendly recommendation text
+  const getStageRecommendationText = (status: string): string => {
+    const texts: Record<string, string> = {
+      researching: 'You\'re still exploring options. Start from Research & Clarity to understand all requirements.',
+      preparing: 'You\'re gathering documents. Start from Document Prep where we\'ll guide you through what\'s needed.',
+      applying: 'You\'re ready to apply. Jump straight to Application & Biometrics to submit your visa.',
+      applied: 'You\'ve already submitted. Start from Application & Biometrics to track your decision.',
+      approved: 'Congrats! Your visa is approved. Start from Arrival to prepare for your move.',
+      in_country: 'You\'re already here! Start from Settling & Thriving to complete your relocation journey.',
+    }
+    return texts[status] || 'Let us guide you through the next steps.'
+  }
+
   const handleSubmit = async () => {
     if (!homeCountry || !destinationCountry || !visaType || !destinationCity || !departureDate || !progressStatus) {
       alert('Please fill all fields')
@@ -62,17 +88,7 @@ export default function Onboarding() {
 
     setLoading(true)
     try {
-      // Map progress status to starting stage
-      const statusToStageMap: Record<string, number> = {
-        researching: 1,
-        preparing: 2,
-        applying: 3,
-        applied: 3,
-        approved: 4,
-        in_country: 5,
-      }
-
-      const startingStage = startFromScratch ? 1 : (statusToStageMap[progressStatus] || 1)
+      const startingStage = startFromScratch ? 1 : statusToStageMap(progressStatus)
 
       const { error } = await supabase.from('users').upsert(
         {
@@ -258,12 +274,12 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Page 5 - Progress Status */}
+                    {/* Page 5 - Progress Status */}
           {page === 5 && (
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Where are you in the journey? 🎯</h3>
               <p className="text-gray-600 mb-6">This helps us customize your experience</p>
-              <div className="space-y-3">
+              <div className="space-y-3 mb-6">
                 {PROGRESS_STATUSES.map((status) => (
                   <button
                     key={status.id}
@@ -287,57 +303,105 @@ export default function Onboarding() {
                 ))}
               </div>
 
-              <button
-                onClick={() => setPage(4)}
-                className="mt-6 text-gray-600 hover:text-gray-900 font-semibold text-sm"
-              >
-                ← Back
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setPage(4)}
+                  className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg font-semibold"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={() => setPage(6)}
+                  disabled={!progressStatus}
+                  className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold disabled:opacity-50"
+                >
+                  Next →
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Page 6 - Confirm approach */}
+                    {/* Page 6 - Personalized recommendation */}
           {page === 6 && (
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Let's personalize your path 🚀</h3>
-              <p className="text-gray-600 mb-6">
-                You said you're at: <span className="font-semibold text-indigo-600">{PROGRESS_STATUSES.find(s => s.id === progressStatus)?.label}</span>
-              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Your personalized path 🗺️</h3>
 
-              <div className="space-y-4 mb-8">
-                <button
-                  onClick={() => setStartFromScratch(true)}
-                  className={`w-full p-6 rounded-lg border-2 text-left transition ${
-                    startFromScratch
-                      ? 'border-indigo-600 bg-indigo-50'
-                      : 'border-gray-200 hover:border-indigo-300'
-                  }`}
-                >
-                  <p className={`font-semibold text-lg ${startFromScratch ? 'text-indigo-700' : 'text-gray-900'}`}>
-                    Start from scratch ✨
-                  </p>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Follow our complete roadmap from the beginning. (Recommended for thoroughness)
-                  </p>
-                </button>
+              {/* Show current status */}
+              <div className="bg-indigo-50 border-2 border-indigo-200 rounded-lg p-6 mb-8">
+                <p className="text-sm text-indigo-700 font-semibold mb-1">You selected:</p>
+                <p className="text-2xl font-bold text-indigo-600">
+                  {PROGRESS_STATUSES.find(s => s.id === progressStatus)?.label}
+                </p>
+              </div>
 
+              {/* Show recommendation */}
+              <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6 mb-8">
+                <p className="text-sm text-green-700 font-semibold mb-2">✨ Recommended for you:</p>
+                <p className="text-xl font-bold text-green-600 mb-2">
+                  Start from Stage {statusToStageMap(progressStatus)}
+                </p>
+                <p className="text-sm text-green-700">
+                  {getStageRecommendationText(progressStatus)}
+                </p>
+                {statusToStageMap(progressStatus) > 1 && (
+                  <p className="text-xs text-green-600 mt-3 italic">
+                    You'll still have access to earlier stages if you want to review them.
+                  </p>
+                )}
+              </div>
+
+              {/* Two options */}
+              <p className="text-sm font-semibold text-gray-700 mb-4">How would you like to start?</p>
+              
+              <div className="space-y-3 mb-8">
+                {/* Option 1: Start from recommendation */}
                 <button
                   onClick={() => setStartFromScratch(false)}
                   className={`w-full p-6 rounded-lg border-2 text-left transition ${
                     !startFromScratch
-                      ? 'border-indigo-600 bg-indigo-50'
+                      ? 'border-indigo-600 bg-indigo-50 ring-2 ring-indigo-200'
                       : 'border-gray-200 hover:border-indigo-300'
                   }`}
                 >
-                  <p className={`font-semibold text-lg ${!startFromScratch ? 'text-indigo-700' : 'text-gray-900'}`}>
-                    Start from where I am 📍
-                  </p>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Jump to the relevant stage based on your progress. (Faster if you're already ahead)
-                  </p>
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">🎯</span>
+                    <div className="flex-1">
+                      <p className={`font-semibold ${!startFromScratch ? 'text-indigo-700' : 'text-gray-900'}`}>
+                        Jump to Stage {statusToStageMap(progressStatus)}
+                      </p>
+                      <p className="text-sm text-gray-600 mt-2">
+                        Start from where you are. Faster path. You can review earlier stages anytime.
+                      </p>
+                      <p className="text-xs text-indigo-600 font-semibold mt-3">✓ Recommended</p>
+                    </div>
+                  </div>
+                </button>
+
+                {/* Option 2: Start from scratch */}
+                <button
+                  onClick={() => setStartFromScratch(true)}
+                  className={`w-full p-6 rounded-lg border-2 text-left transition ${
+                    startFromScratch
+                      ? 'border-orange-600 bg-orange-50 ring-2 ring-orange-200'
+                      : 'border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">📚</span>
+                    <div className="flex-1">
+                      <p className={`font-semibold ${startFromScratch ? 'text-orange-700' : 'text-gray-900'}`}>
+                        Start from Stage 1 (Complete)
+                      </p>
+                      <p className="text-sm text-gray-600 mt-2">
+                        Go through everything from the beginning. More thorough, but takes longer.
+                      </p>
+                      <p className="text-xs text-gray-600 mt-3">Best if you want to double-check nothing</p>
+                    </div>
+                  </div>
                 </button>
               </div>
 
+              {/* Action buttons */}
               <div className="flex gap-3">
                 <button
                   onClick={() => setPage(5)}
@@ -350,11 +414,12 @@ export default function Onboarding() {
                   disabled={loading}
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-semibold disabled:opacity-50"
                 >
-                  {loading ? 'Setting up...' : 'Let\'s go! 🚀'}
+                  {loading ? 'Setting up...' : `Start at Stage ${startFromScratch ? 1 : statusToStageMap(progressStatus)} →`}
                 </button>
               </div>
             </div>
           )}
+
         </div>
       </div>
     </div>
