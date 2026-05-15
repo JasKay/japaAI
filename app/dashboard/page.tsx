@@ -240,10 +240,10 @@ export default function Dashboard() {
     {/* Mobile: Compact */}
     <div className="sm:hidden">
       <h1 className="text-xl font-bold text-gray-900">
-        {userData?.email?.split('@')[0]}
+        Hey {firstName}! 👋
       </h1>
       <p className="text-xs text-gray-600 mt-1">
-        {userData?.visa_type.toUpperCase()} | {daysUntilDeparture}d
+        {userData?.visa_type.toUpperCase()} | {destinationDisplay} 🇬🇧 |  {daysUntilDeparture}d
       </p>
       <button
         onClick={handleSignOut}
