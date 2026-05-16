@@ -1,6 +1,21 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import { Poppins } from 'next/font/google'
+import { Space_Grotesk } from 'next/font/google'
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['700'],
+  variable: '--font-space',
+})
+
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['700'],
+  variable: '--font-poppins',
+})
 
 const inter = Inter({ subsets: ['latin'] })
 

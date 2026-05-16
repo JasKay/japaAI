@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
+
 const slides = [
   {
     id: 0,
@@ -117,15 +118,26 @@ export default function Landing() {
         <div className="absolute top-10 left-10 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-white opacity-5 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
-        <div className="relative z-10 w-full max-w-md">
+   <div className="relative z-10 w-full max-w-2xl">
           <div className="mb-6">
-            <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white mb-3 leading-tight">
-              Move Anywhere with Confidence
-            </h1>
-            <p className="text-xs sm:text-base lg:text-2xl text-indigo-100 mb-4 font-light">
-              Your AI-guided companion for visa, documents, and settlement
-            </p>
-          </div>
+  {/* Company Name */}
+  <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300 mb-1 leading-tight tracking-widest uppercase" style={{fontFamily: 'var(--font-space)'}}>
+  Aliov
+</h1>
+
+  
+  {/* Main Headline */}
+ <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white mb-3 leading-tight">
+  Move Anywhere<br />
+  with Confidence
+</h1>
+
+  
+  {/* Subtitle */}
+  <p className="text-xs sm:text-base lg:text-2xl text-indigo-100 mb-4 font-light">
+    Your AI-guided companion for visa, documents, and settlement
+  </p>
+</div>
 
           <div className="bg-white rounded-2xl p-4 sm:p-6 mb-6 border border-gray-200 shadow-lg">
             <p className="text-sm sm:text-base text-gray-900 font-semibold mb-3">Here's how we'll guide you</p>
