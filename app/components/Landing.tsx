@@ -9,7 +9,7 @@ const slides = [
     type: 'hero',
     title: 'Move Anywhere with Confidence',
     subtitle: 'Your AI-guided companion for visa, documents, and settlement',
-    highlight: 'No agents needed. Just you, Aliov, and your dream.',
+    highlight: 'No agents needed. Just you, JapaAI, and your dream.',
   },
   {
     id: 1,
@@ -45,7 +45,7 @@ const slides = [
     type: 'tasks',
     title: 'Step-by-Step Guidance',
     subtitle: 'No confusion. No guesswork.',
-    content: 'Every task is broken into clear steps with real advice from people who have done it.',
+    content: 'Every task is broken into clear steps with real advice from people who\'ve done it.',
     emoji: '📚',
     taskExample: {
       title: 'Get bank statement notarized',
@@ -81,7 +81,7 @@ const slides = [
     id: 7,
     type: 'cta',
     title: 'Ready?',
-    subtitle: 'Let us get you moving.',
+    subtitle: 'Let\'s get you moving.',
     content: 'You don\'t need an expensive agent. You need a guide who understands your journey.',
     emoji: '🚀',
   },
@@ -109,46 +109,46 @@ export default function Landing() {
 
   const slide = slides[currentSlide]
 
-  // Hero screen
+  // Hero screen - MOBILE OPTIMIZED
   if (!hasStarted && currentSlide === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center px-4 overflow-hidden relative">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center px-4 py-6 overflow-auto">
         {/* Animated background elements */}
         <div className="absolute top-10 left-10 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-white opacity-5 rounded-full blur-3xl animate-pulse delay-1000"></div>
 
-        <div className="relative z-10 text-center max-w-2xl">
-          <div className="mb-8">
-            <h1 className="text-7xl font-black text-white mb-4 leading-tight">
+        <div className="relative z-10 w-full max-w-md">
+          <div className="mb-6">
+            <h1 className="text-3xl sm:text-5xl lg:text-7xl font-black text-white mb-3 leading-tight">
               Move Anywhere with Confidence
             </h1>
-            <p className="text-2xl text-indigo-100 mb-6 font-light">
+            <p className="text-xs sm:text-base lg:text-2xl text-indigo-100 mb-4 font-light">
               Your AI-guided companion for visa, documents, and settlement
             </p>
           </div>
 
-          <div className="bg-white bg-opacity-10 backdrop-blur-lg rounded-3xl p-8 mb-8 border border-white border-opacity-20">
-            <p className="text-lg text-white font-semibold mb-4">Here's how we'll guide you</p>
-            <ul className="text-left space-y-3 text-indigo-100 mb-6">
-              <li className="flex items-center gap-3">
-                <span className="text-2xl">📋</span>
-                <span>Understand your visa requirements (not vague, crystal clear)</span>
+          <div className="bg-white rounded-2xl p-4 sm:p-6 mb-6 border border-gray-200 shadow-lg">
+            <p className="text-sm sm:text-base text-gray-900 font-semibold mb-3">Here's how we'll guide you</p>
+            <ul className="text-left space-y-2 text-gray-800 mb-4">
+              <li className="flex items-start gap-2">
+                <span className="text-lg sm:text-xl flex-shrink-0">📋</span>
+                <span className="text-xs sm:text-sm font-medium">Visa requirements (crystal clear)</span>
               </li>
-              <li className="flex items-center gap-3">
-                <span className="text-2xl">📝</span>
-                <span>Get document checklist tailored to YOU</span>
+              <li className="flex items-start gap-2">
+                <span className="text-lg sm:text-xl flex-shrink-0">📝</span>
+                <span className="text-xs sm:text-sm font-medium">Document checklist tailored to YOU</span>
               </li>
-              <li className="flex items-center gap-3">
-                <span className="text-2xl">⏱️</span>
-                <span>Know exact timelines & common mistakes to avoid</span>
+              <li className="flex items-start gap-2">
+                <span className="text-lg sm:text-xl flex-shrink-0">⏱️</span>
+                <span className="text-xs sm:text-sm font-medium">Real timelines & avoid mistakes</span>
               </li>
-              <li className="flex items-center gap-3">
-                <span className="text-2xl">🎯</span>
-                <span>Track progress. Get alerts. Never miss a deadline.</span>
+              <li className="flex items-start gap-2">
+                <span className="text-lg sm:text-xl flex-shrink-0">🎯</span>
+                <span className="text-xs sm:text-sm font-medium">Track progress. Never miss deadlines.</span>
               </li>
             </ul>
-            <p className="text-indigo-100 italic">
-              Tested with real people who moved. Real timelines. Real results.
+            <p className="text-xs sm:text-sm text-gray-700 italic">
+              Tested with real people. Real timelines.
             </p>
           </div>
 
@@ -157,7 +157,7 @@ export default function Landing() {
               setHasStarted(true)
               setCurrentSlide(1)
             }}
-            className="px-8 py-4 bg-white text-purple-600 rounded-full font-bold text-lg hover:bg-indigo-50 transition transform hover:scale-105 shadow-lg"
+            className="w-full px-5 sm:px-8 py-3 sm:py-4 bg-white text-purple-600 rounded-full font-bold text-sm sm:text-base hover:bg-indigo-50 transition transform hover:scale-105 shadow-lg"
           >
             See How It Works →
           </button>
@@ -169,8 +169,30 @@ export default function Landing() {
   // Carousel slides
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex flex-col items-center justify-center px-4 py-8">
-      {/* Main content */}
+      {/* Main content - with top nav for carousel slides */}
       <div className="w-full max-w-4xl">
+        {/* Navigation at TOP for carousel slides (not CTA) */}
+        {slide.type !== 'cta' && (
+          <div className="flex gap-3 w-full max-w-md mx-auto mb-6">
+            <button
+              onClick={prevSlide}
+              disabled={currentSlide === 0}
+              className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              ← Back
+            </button>
+            <div className="px-4 py-2 bg-slate-700 text-white rounded-lg font-semibold text-sm text-center flex-1">
+              {currentSlide + 1} / {slides.length}
+            </div>
+            <button
+              onClick={nextSlide}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-semibold transition text-sm"
+            >
+              Next →
+            </button>
+          </div>
+        )}
+
         {/* Slide Content */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 sm:p-12 mb-8 min-h-[500px] flex flex-col justify-between">
           {/* Header */}
@@ -342,55 +364,27 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Navigation & Progress */}
-        <div className="flex flex-col items-center gap-6">
-          {/* Progress bar */}
-          <div className="w-full bg-slate-700 rounded-full h-2">
-            <div
-              className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentSlide + 1) / slides.length) * 100}%` }}
-            ></div>
+        {/* Navigation & Progress - BOTTOM only for CTA */}
+        {slide.type === 'cta' ? (
+          <div className="flex flex-col gap-3 w-full max-w-md mx-auto">
+            <Link
+              href="/auth"
+              className="w-full px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-bold text-center transition text-lg"
+            >
+              Let's Get Started 🚀
+            </Link>
+            <button
+              onClick={restart}
+              className="w-full px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition"
+            >
+              Watch Again
+            </button>
           </div>
-
-          {/* Slide counter */}
-          <p className="text-white text-sm font-semibold">
-            {currentSlide + 1} / {slides.length}
-          </p>
-
-          {/* Navigation buttons */}
-          {slide.type !== 'cta' ? (
-            <div className="flex gap-4 w-full max-w-md">
-              <button
-                onClick={prevSlide}
-                disabled={currentSlide === 0}
-                className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                ← Back
-              </button>
-              <button
-                onClick={nextSlide}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-semibold transition"
-              >
-                Next →
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3 w-full max-w-md">
-              <Link
-                href="/auth"
-                className="w-full px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-bold text-center transition text-lg"
-              >
-                Let's Get Started 🚀
-              </Link>
-              <button
-                onClick={restart}
-                className="w-full px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-semibold transition"
-              >
-                Watch Again
-              </button>
-            </div>
-          )}
-        </div>
+        ) : (
+          <div className="text-center">
+            <p className="text-slate-400 text-sm">Slide {currentSlide + 1} of {slides.length}</p>
+          </div>
+        )}
       </div>
     </div>
   )
