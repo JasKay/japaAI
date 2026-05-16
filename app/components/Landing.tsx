@@ -36,7 +36,7 @@ const slides = [
     emoji: '📊',
     stats: [
       { label: 'Current Stage', value: 'Document Prep' },
-      { label: 'Progress', value: '45%' },
+      { label: 'Your Progress', value: '45%' },
       { label: 'Days to Departure', value: '87' },
     ],
   },
@@ -266,9 +266,11 @@ export default function Landing() {
                       <p className="text-xs text-gray-600 font-semibold mb-2">
                         {stat.label}
                       </p>
-                      <p className="text-2xl font-black text-indigo-600">
-                        {stat.value}
-                      </p>
+         <p className="text-sm sm:text-2xl font-black text-indigo-600">
+  {stat.value}
+</p>
+
+
                     </div>
                   ))}
                 </div>
