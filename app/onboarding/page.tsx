@@ -4,21 +4,46 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
+// 10 HOME COUNTRIES
 const HOME_COUNTRIES = [
-  'Nigeria', 'Ghana', 'Kenya', 'South Africa', 'India', 'Pakistan', 'Bangladesh', 'Mexico', 'Brazil', 'Philippines', 'Vietnam', 'Indonesia',
+  'Nigeria', 'Ghana', 'Kenya', 'South Africa', 
+  'India', 'Pakistan', 'Bangladesh', 
+  'Mexico', 'Brazil', 'Philippines'
 ]
 
+// 5 DESTINATION COUNTRIES
 const DESTINATION_COUNTRIES = [
-  'UK', 'USA', 'Canada', 'Australia', 'Germany', 'Netherlands', 'Japan', 'Singapore', 'Dubai', 'New Zealand', 'Ireland', 'Switzerland',
+  'UK', 'USA', 'Canada', 'Australia', 'Germany'
 ]
 
-const VISA_TYPES = [
-  { id: 'work', label: 'Work Visa', emoji: '💼' },
-  { id: 'study', label: 'Study Visa', emoji: '🎓' },
-  { id: 'hpi', label: 'HPI Visa (Fresh Grad)', emoji: '🌟' },
-  { id: 'family', label: 'Family Visa', emoji: '👨‍👩‍👧' },
-  { id: 'entrepreneur', label: 'Entrepreneur Visa', emoji: '🚀' },
-]
+// VISA TYPES BY DESTINATION
+const VISA_BY_DESTINATION: Record<string, Array<{ id: string; label: string; emoji: string }>> = {
+  uk: [
+    { id: 'hpi', label: 'HPI Visa (Fresh Grad)', emoji: '🌟' },
+    { id: 'study', label: 'Study Visa', emoji: '🎓' },
+    { id: 'work_uk', label: 'Skilled Worker', emoji: '💼' },
+  ],
+  usa: [
+    { id: 'h1b', label: 'H-1B Work Visa', emoji: '💼' },
+    { id: 'study_usa', label: 'F-1 Student Visa', emoji: '🎓' },
+    { id: 'eb5_investment', label: 'EB-5 Investment', emoji: '💰' },
+  ],
+  canada: [
+    { id: 'express_entry', label: 'Express Entry', emoji: '🍁' },
+    { id: 'study_canada', label: 'Study Permit', emoji: '🎓' },
+    { id: 'lmia_work', label: 'Work Permit (LMIA)', emoji: '💼' },
+  ],
+  australia: [
+    { id: 'skilled_australia', label: 'Skilled Migration', emoji: '🦘' },
+    { id: 'study_australia', label: 'Student Visa', emoji: '🎓' },
+    { id: 'work_australia', label: 'Work Visa (482)', emoji: '💼' },
+  ],
+  germany: [
+    { id: 'blue_card', label: 'EU Blue Card', emoji: '🇪🇺' },
+    { id: 'study_germany', label: 'Student Visa', emoji: '🎓' },
+    { id: 'work_germany', label: 'Work Visa', emoji: '💼' },
+  ],
+}
 
 const PROGRESS_STATUSES = [
   { id: 'researching', label: 'Just starting to research', emoji: '🔍', description: 'I\'m exploring options' },
@@ -42,6 +67,14 @@ export default function Onboarding() {
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
 
+  // Get visa types for selected destination
+  const visasForDestination = VISA_BY_DESTINATION[destinationCountry.toLowerCase()] || []
+
+  // Reset visa type when destination changes
+  useEffect(() => {
+    setVisaType('')
+  }, [destinationCountry])
+
   useEffect(() => {
     const getUser = async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser()
@@ -54,7 +87,6 @@ export default function Onboarding() {
     getUser()
   }, [router])
 
-    // Helper function to map progress status to starting stage
   const statusToStageMap = (status: string): number => {
     const map: Record<string, number> = {
       researching: 1,
@@ -67,15 +99,14 @@ export default function Onboarding() {
     return map[status] || 1
   }
 
-  // Helper function to get friendly recommendation text
   const getStageRecommendationText = (status: string): string => {
     const texts: Record<string, string> = {
-      researching: 'You\'re still exploring options. Start from Research & Clarity to understand all requirements.',
-      preparing: 'You\'re gathering documents. Start from Document Prep where we\'ll guide you through what\'s needed.',
-      applying: 'You\'re ready to apply. Jump straight to Application & Biometrics to submit your visa.',
-      applied: 'You\'ve already submitted. Start from Application & Biometrics to track your decision.',
-      approved: 'Congrats! Your visa is approved. Start from Arrival to prepare for your move.',
-      in_country: 'You\'re already here! Start from Settling & Thriving to complete your relocation journey.',
+      researching: 'You\'re still exploring options. Start from Stage 1 to understand all requirements.',
+      preparing: 'You\'re gathering documents. Start from Stage 2 where we guide you through what\'s needed.',
+      applying: 'You\'re ready to apply. Jump to Stage 3 to submit your visa.',
+      applied: 'You\'ve already submitted. Start from Stage 3 to track your decision.',
+      approved: 'Congrats! Your visa is approved. Start from Stage 4 to prepare for arrival.',
+      in_country: 'You\'re already here! Start from Stage 5 to complete your relocation journey.',
     }
     return texts[status] || 'Let us guide you through the next steps.'
   }
@@ -146,7 +177,7 @@ export default function Onboarding() {
 
         {/* Page Content */}
         <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12">
-          {/* Page 1 */}
+          {/* Page 1: Home Country */}
           {page === 1 && (
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Where are you from? 🌍</h3>
@@ -169,7 +200,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Page 2 */}
+          {/* Page 2: Destination Country */}
           {page === 2 && (
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Where are you going? ✈️</h3>
@@ -198,13 +229,13 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Page 3 */}
+          {/* Page 3: Visa Type */}
           {page === 3 && (
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Which visa? 📋</h3>
-              <p className="text-gray-600 mb-6">What type of visa are you targeting?</p>
+              <p className="text-gray-600 mb-6">What type of visa are you targeting for {destinationCountry}?</p>
               <div className="space-y-3">
-                {VISA_TYPES.map((visa) => (
+                {visasForDestination.map((visa) => (
                   <button
                     key={visa.id}
                     onClick={() => { setVisaType(visa.id); setPage(4) }}
@@ -228,7 +259,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Page 4 */}
+          {/* Page 4: Details */}
           {page === 4 && (
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Details 📅</h3>
@@ -274,7 +305,7 @@ export default function Onboarding() {
             </div>
           )}
 
-                    {/* Page 5 - Progress Status */}
+          {/* Page 5: Progress Status */}
           {page === 5 && (
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Where are you in the journey? 🎯</h3>
@@ -321,12 +352,11 @@ export default function Onboarding() {
             </div>
           )}
 
-                    {/* Page 6 - Personalized recommendation */}
+          {/* Page 6: Personalized recommendation */}
           {page === 6 && (
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Your personalized path 🗺️</h3>
 
-              {/* Show current status */}
               <div className="bg-indigo-50 border-2 border-indigo-200 rounded-lg p-6 mb-8">
                 <p className="text-sm text-indigo-700 font-semibold mb-1">You selected:</p>
                 <p className="text-2xl font-bold text-indigo-600">
@@ -334,7 +364,6 @@ export default function Onboarding() {
                 </p>
               </div>
 
-              {/* Show recommendation */}
               <div className="bg-green-50 border-2 border-green-200 rounded-lg p-6 mb-8">
                 <p className="text-sm text-green-700 font-semibold mb-2">✨ Recommended for you:</p>
                 <p className="text-xl font-bold text-green-600 mb-2">
@@ -350,11 +379,9 @@ export default function Onboarding() {
                 )}
               </div>
 
-              {/* Two options */}
               <p className="text-sm font-semibold text-gray-700 mb-4">How would you like to start?</p>
               
               <div className="space-y-3 mb-8">
-                {/* Option 1: Start from recommendation */}
                 <button
                   onClick={() => setStartFromScratch(false)}
                   className={`w-full p-6 rounded-lg border-2 text-left transition ${
@@ -370,14 +397,13 @@ export default function Onboarding() {
                         Jump to Stage {statusToStageMap(progressStatus)}
                       </p>
                       <p className="text-sm text-gray-600 mt-2">
-                        Start from where you are. Faster path. You can review earlier stages anytime.
+                        Start from where you are. Faster path.
                       </p>
                       <p className="text-xs text-indigo-600 font-semibold mt-3">✓ Recommended</p>
                     </div>
                   </div>
                 </button>
 
-                {/* Option 2: Start from scratch */}
                 <button
                   onClick={() => setStartFromScratch(true)}
                   className={`w-full p-6 rounded-lg border-2 text-left transition ${
@@ -393,15 +419,13 @@ export default function Onboarding() {
                         Start from Stage 1 (Complete)
                       </p>
                       <p className="text-sm text-gray-600 mt-2">
-                        Go through everything from the beginning. More thorough, but takes longer.
+                        Go through everything from the beginning.
                       </p>
-                      <p className="text-xs text-gray-600 mt-3">Best if you want to double-check everything</p>
                     </div>
                   </div>
                 </button>
               </div>
 
-              {/* Action buttons */}
               <div className="flex gap-3">
                 <button
                   onClick={() => setPage(5)}
@@ -419,7 +443,6 @@ export default function Onboarding() {
               </div>
             </div>
           )}
-
         </div>
       </div>
     </div>
