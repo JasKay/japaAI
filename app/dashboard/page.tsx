@@ -5,8 +5,12 @@ import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import TaskCoach from '@/app/components/TaskCoach'
 import EditProfileModal from '@/app/components/EditProfileModal'
+import { convertGBPToHomeCountry } from '@/lib/currency'
 
 
+// Example: Show UK visa cost in user's home currency
+const cost = convertGBPToHomeCountry(719, user.home_country)
+// Returns: { amount: 575200, currency: 'NGN', formatted: '₦575,200' }
 
 interface Stage {
   id: number

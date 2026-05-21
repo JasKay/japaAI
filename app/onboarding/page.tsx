@@ -46,12 +46,12 @@ const VISA_BY_DESTINATION: Record<string, Array<{ id: string; label: string; emo
 }
 
 const PROGRESS_STATUSES = [
-  { id: 'researching', label: 'Just starting to research', emoji: '🔍', description: 'I\'m exploring options' },
+  { id: 'researching', label: 'Just starting to research', emoji: '🔍', description: 'I am exploring options' },
   { id: 'preparing', label: 'Preparing documents', emoji: '📋', description: 'Gathering requirements' },
   { id: 'applying', label: 'Ready to apply', emoji: '📝', description: 'Submitting application soon' },
   { id: 'applied', label: 'Already applied', emoji: '⏳', description: 'Waiting for decision' },
   { id: 'approved', label: 'Visa approved', emoji: '✅', description: 'Got my visa!' },
-  { id: 'in_country', label: 'Already here', emoji: '🏠', description: 'I\'ve arrived' },
+  { id: 'in_country', label: 'Already here', emoji: '🏠', description: 'I have arrived' },
 ]
 
 export default function Onboarding() {
@@ -101,12 +101,12 @@ export default function Onboarding() {
 
   const getStageRecommendationText = (status: string): string => {
     const texts: Record<string, string> = {
-      researching: 'You\'re still exploring options. Start from Stage 1 to understand all requirements.',
-      preparing: 'You\'re gathering documents. Start from Stage 2 where we guide you through what\'s needed.',
-      applying: 'You\'re ready to apply. Jump to Stage 3 to submit your visa.',
-      applied: 'You\'ve already submitted. Start from Stage 3 to track your decision.',
+      researching: 'You are still exploring options. Start from Stage 1 to understand all requirements.',
+      preparing: 'You are gathering documents. Start from Stage 2 where we guide you through what is needed.',
+      applying: 'You are ready to apply. Jump to Stage 3 to submit your visa.',
+      applied: 'You have already submitted. Start from Stage 3 to track your decision.',
       approved: 'Congrats! Your visa is approved. Start from Stage 4 to prepare for arrival.',
-      in_country: 'You\'re already here! Start from Stage 5 to complete your relocation journey.',
+      in_country: 'You are already here! Start from Stage 5 to complete your relocation journey.',
     }
     return texts[status] || 'Let us guide you through the next steps.'
   }
@@ -162,7 +162,7 @@ export default function Onboarding() {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Let's get you set up</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Let us get you set up</h2>
             <span className="text-sm font-semibold text-indigo-600">
               {page}/6
             </span>
@@ -229,7 +229,7 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Page 3: Visa Type */}
+          {/* Page 3: Visa Type - NOW FILTERED BY DESTINATION */}
           {page === 3 && (
             <div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Which visa? 📋</h3>
@@ -334,6 +334,14 @@ export default function Onboarding() {
                 ))}
               </div>
 
+              {progressStatus === 'researching' && (
+                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-700 font-semibold">
+                    ✓ Perfect! Since you are just researching, we will take you directly to Stage 1 to begin learning.
+                  </p>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <button
                   onClick={() => setPage(4)}
@@ -342,11 +350,18 @@ export default function Onboarding() {
                   ← Back
                 </button>
                 <button
-                  onClick={() => setPage(6)}
-                  disabled={!progressStatus}
+                  onClick={() => {
+                    if (progressStatus === 'researching') {
+                      setStartFromScratch(true)
+                      handleSubmit()
+                    } else {
+                      setPage(6)
+                    }
+                  }}
+                  disabled={!progressStatus || loading}
                   className="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold disabled:opacity-50"
                 >
-                  Next →
+                  {loading ? 'Setting up...' : 'Next →'}
                 </button>
               </div>
             </div>
@@ -374,7 +389,7 @@ export default function Onboarding() {
                 </p>
                 {statusToStageMap(progressStatus) > 1 && (
                   <p className="text-xs text-green-600 mt-3 italic">
-                    You'll still have access to earlier stages if you want to review them.
+                    You will still have access to earlier stages if you want to review them.
                   </p>
                 )}
               </div>
