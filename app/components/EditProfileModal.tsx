@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { X } from 'lucide-react'
 
 // VISA TYPES BY DESTINATION
 const VISA_BY_DESTINATION: Record<string, Array<{ id: string; label: string; emoji: string }>> = {
@@ -45,49 +44,81 @@ interface EditProfileModalProps {
     destination_city: string
     expected_departure: string
   }
-  onSave: (data: any) => Promise<void>
+  userId: string
+  onSaveSuccess: () => void
 }
 
 export default function EditProfileModal({
   isOpen,
   onClose,
   currentData,
-  onSave,
+  userId,
+  onSaveSuccess,
 }: EditProfileModalProps) {
   const [activeTab, setActiveTab] = useState('from')
-  const [homeCountry, setHomeCountry] = useState(currentData.home_country)
-  const [destination, setDestination] = useState(currentData.destination)
-  const [visaType, setVisaType] = useState(currentData.visa_type)
-  const [city, setCity] = useState(currentData.destination_city)
-  const [departureDate, setDepartureDate] = useState(currentData.expected_departure)
+  const [homeCountry, setHomeCountry] = useState(currentData?.home_country || '')
+  const [destination, setDestination] = useState(currentData?.destination || '')
+  const [visaType, setVisaType] = useState(currentData?.visa_type || '')
+  const [city, setCity] = useState(currentData?.destination_city || '')
+  const [departureDate, setDepartureDate] = useState(currentData?.expected_departure || '')
   const [loading, setLoading] = useState(false)
 
   // Get visa types for selected destination
   const visasForDestination = VISA_BY_DESTINATION[destination.toLowerCase()] || []
 
-  // Reset visa type when destination changes
+  // When destination changes, CLEAR visa type (user must re-select for new destination)
   useEffect(() => {
     setVisaType('')
   }, [destination])
 
+  // Validate that selected visa matches destination
+  const isValidVisaForDestination = visasForDestination.some(v => v.id === visaType)
+
   const handleSave = async () => {
+    // Validate all fields
     if (!homeCountry || !destination || !visaType || !city || !departureDate) {
       alert('Please fill all fields')
       return
     }
 
+    // Validate visa matches destination
+    if (!isValidVisaForDestination) {
+      alert('Please select a valid visa for ' + destination)
+      return
+    }
+
     setLoading(true)
     try {
-      await onSave({
+      // Check if destination or visa changed
+      const destinationChanged = destination.toLowerCase() !== currentData?.destination?.toLowerCase()
+      const visaChanged = visaType !== currentData?.visa_type
+
+      // If destination or visa type changed, reset progress to Stage 1
+      const newStage = destinationChanged || visaChanged ? 1 : undefined
+
+      const updateData: any = {
+        id: userId,
         home_country: homeCountry,
         destination: destination.toLowerCase(),
         visa_type: visaType,
         destination_city: city.toLowerCase(),
         expected_departure: departureDate,
-      })
+      }
+
+      // Only update stage if it changed
+      if (newStage) {
+        updateData.current_stage = newStage
+      }
+
+      const { error } = await supabase.from('users').update(updateData).eq('id', userId)
+
+      if (error) throw error
+
+      // Trigger parent refresh
+      onSaveSuccess()
       onClose()
-    } catch (err) {
-      alert('Error updating profile')
+    } catch (err: any) {
+      alert('Error updating profile: ' + err.message)
     } finally {
       setLoading(false)
     }
@@ -103,9 +134,9 @@ export default function EditProfileModal({
           <h2 className="text-2xl font-bold">Edit Profile</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-white/20 rounded-lg transition"
+            className="p-1 hover:bg-white/20 rounded-lg transition text-2xl"
           >
-            <X size={24} />
+            ✕
           </button>
         </div>
 
@@ -134,10 +165,11 @@ export default function EditProfileModal({
 
         {/* Tab Content */}
         <div className="p-6">
-          {/* FROM TAB */}
+          {/* FROM TAB - Can switch home country freely */}
           {activeTab === 'from' && (
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-4">Where are you from?</h3>
+              <p className="text-sm text-gray-600 mb-4">You can freely switch your home country</p>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   'Nigeria', 'Ghana', 'Kenya', 'South Africa',
@@ -164,6 +196,7 @@ export default function EditProfileModal({
           {activeTab === 'to' && (
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-4">Where are you moving to?</h3>
+              <p className="text-sm text-gray-600 mb-4">Changing destination will clear your visa selection</p>
               <div className="grid grid-cols-2 gap-3">
                 {DESTINATIONS.map((country) => (
                   <button
@@ -182,10 +215,18 @@ export default function EditProfileModal({
             </div>
           )}
 
-          {/* VISA TAB - NOW FILTERED BY DESTINATION */}
+          {/* VISA TAB - MUST MATCH DESTINATION */}
           {activeTab === 'visa' && (
             <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Visa Type for {destination}</h3>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Visa Type for {destination}</h3>
+              <p className="text-sm text-gray-600 mb-4">Only visas for {destination} are available</p>
+              
+              {!destination && (
+                <p className="text-sm text-orange-600 font-semibold p-4 bg-orange-50 rounded-lg mb-4">
+                  ⚠️ Please select a destination first
+                </p>
+              )}
+
               {visasForDestination.length > 0 ? (
                 <div className="space-y-3">
                   {visasForDestination.map((visa) => (
@@ -209,18 +250,20 @@ export default function EditProfileModal({
                 <p className="text-gray-600">Please select a destination first</p>
               )}
 
-              <div className="mt-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  City in {destination}
-                </label>
-                <input
-                  type="text"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
-                  placeholder={`e.g., London`}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-600 outline-none"
-                />
-              </div>
+              {destination && (
+                <div className="mt-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    City in {destination}
+                  </label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder={`e.g., London`}
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-600 outline-none"
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -238,6 +281,13 @@ export default function EditProfileModal({
           )}
         </div>
 
+        {/* Info about what changes */}
+        <div className="px-6 py-4 bg-blue-50 border-t border-blue-200">
+          <p className="text-xs text-blue-700">
+            💡 <strong>What happens:</strong> Home country can switch freely. Destination or visa changes = progress resets to 0% for new path.
+          </p>
+        </div>
+
         {/* Footer */}
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-6 flex gap-3">
           <button
@@ -248,8 +298,8 @@ export default function EditProfileModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={loading}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-semibold transition disabled:opacity-50"
+            disabled={loading || !isValidVisaForDestination || !visaType}
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Saving...' : 'Save Changes'}
           </button>

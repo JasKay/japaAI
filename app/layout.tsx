@@ -20,7 +20,7 @@ const poppins = Poppins({
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'RelocationKit - Move to UK with Confidence',
+  title: 'Aliov - Your AI Relocation Assistant',
   description: 'Your personalized relocation guide',
 }
 

@@ -8,10 +8,6 @@ import EditProfileModal from '@/app/components/EditProfileModal'
 import { convertGBPToHomeCountry } from '@/lib/currency'
 
 
-// Example: Show UK visa cost in user's home currency
-const cost = convertGBPToHomeCountry(719, user.home_country)
-// Returns: { amount: 575200, currency: 'NGN', formatted: '₦575,200' }
-
 interface Stage {
   id: number
   name: string
@@ -60,6 +56,8 @@ const STAGE_READINESS: Record<string, number> = {
 }
 
 export default function Dashboard() {
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [user, setUser] = useState<any>(null)
   const [userData, setUserData] = useState<any>(null)
   const [stages, setStages] = useState<Stage[]>([])
@@ -68,7 +66,6 @@ export default function Dashboard() {
   const [selectedStage, setSelectedStage] = useState<number | null>(null)
   const [expandedTask, setExpandedTask] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const router = useRouter()
 
   const getDepartureDateColor = () => {
@@ -202,6 +199,32 @@ const colorMap: Record<string, string> = {
     init()
   }, [router])
 
+  useEffect(() => {
+  const fetchUserData = async () => {
+    if (!user) return
+    const { data } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+    
+    if (data) {
+      setUserData(data)
+      const { data: stagesData } = await supabase
+        .from('stages')
+        .select('*')
+        .order('order_num')
+      
+      if (stagesData) {
+        setStages(stagesData)
+      }
+    }
+  }
+  
+  fetchUserData()
+}, [refreshTrigger, user])
+
+
   const handleTaskToggle = async (taskId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'completed' ? 'in_progress' : 'completed'
     const userTask = userTasks.get(taskId)
@@ -324,10 +347,10 @@ const colorMap: Record<string, string> = {
         <div>
           <h1 className="text-lg font-bold text-gray-900">Hey {firstName}! 👋</h1>
                 <button
-        onClick={() => setIsEditModalOpen(true)}
+        onClick={() => setIsEditProfileOpen(true)}
         className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold mt-1"
       >
-        {userData?.home_country} → {destinationDisplay} | {userData?.visa_type.toUpperCase()} | {getStatusLabel(userData?.onboarding_status)} (edit)
+        {userData?.home_country} → {destinationDisplay} | {userData?.visa_type.toUpperCase()} | {getStatusLabel(userData?.onboarding_status)} (✏️ Edit Profile)
       </button>
 
         </div>
@@ -360,7 +383,7 @@ const colorMap: Record<string, string> = {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Hey {firstName}! 👋</h1>
                 <button
-          onClick={() => setIsEditModalOpen(true)}
+          onClick={() => setIsEditProfileOpen(true)}
           className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold mt-1"
         >
           {userData?.home_country} → {destinationDisplay} | {userData?.visa_type.toUpperCase()} | {getStatusLabel(userData?.onboarding_status)} (edit)
@@ -567,13 +590,22 @@ const colorMap: Record<string, string> = {
       </div>
 
       {/* Edit Profile Modal */}
-      <EditProfileModal
-        isOpen={isEditModalOpen}
-        userData={userData}
-        userId={user?.id}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleRefreshUserData}
-      />
+     <EditProfileModal
+  isOpen={isEditProfileOpen}
+  onClose={() => setIsEditProfileOpen(false)}
+  currentData={{
+    home_country: userData?.home_country || '',
+    destination: userData?.destination || '',
+    visa_type: userData?.visa_type || '',
+    destination_city: userData?.destination_city || '',
+    expected_departure: userData?.expected_departure || '',
+  }}
+  userId={user?.id || ''}
+  onSaveSuccess={() => {
+    // Refetch data after save
+    setRefreshTrigger(prev => prev + 1)
+  }}
+/>
 
       </div>
     </div>
