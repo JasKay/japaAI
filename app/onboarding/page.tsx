@@ -4,6 +4,20 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
+// Map visa type strings to UUIDs
+const VISA_TYPE_MAP: Record<string, string> = {
+  'hpi': 'a706719d-0274-4c83-87d6-df1e15384b42',
+  'skilled_worker': 'cba6c708-2cc2-48f9-a389-ca7ac69bfaf9',
+  'h1b': 'e8e59271-2c01-4533-bb74-249047040271',
+  'study_usa': 'd4470f33-5a81-4a32-8a8d-705d2a2abeab',
+  'express_entry': '2a966f93-6a36-49d1-affb-16518e900c43',
+}
+
+function getVisaTypeId(visaTypeString: string): string {
+  return VISA_TYPE_MAP[visaTypeString.toLowerCase()] || visaTypeString
+}
+
+
 // 10 HOME COUNTRIES
 const HOME_COUNTRIES = [
   'Nigeria', 'Ghana', 'Kenya', 'South Africa', 
@@ -121,22 +135,37 @@ export default function Onboarding() {
     try {
       const startingStage = startFromScratch ? 1 : statusToStageMap(progressStatus)
 
-      const { error } = await supabase.from('users').upsert(
+      const { error: userError } = await supabase.from('users').upsert(
         {
           id: user.id,
           email: user.email,
-          home_country: homeCountry,
-          destination: destinationCountry.toLowerCase(),
-          visa_type: visaType,
-          destination_city: destinationCity.toLowerCase(),
-          expected_departure: departureDate,
-          current_stage: startingStage,
-          onboarding_status: progressStatus,
         },
         { onConflict: 'id' }
       )
 
-      if (error) throw error
+      if (userError) throw userError
+        const { error: profileError } = await supabase
+      .from('user_profiles')
+      .upsert(
+        {
+          user_id: user.id,
+
+          // migration intent (NEW HOME)
+          home_country: homeCountry,
+          destination_country: destinationCountry.toUpperCase(),  // CHANGED: uppercase
+          visa_type: getVisaTypeId(visaType),  // CHANGED: convert string to UUID
+          destination_city: destinationCity.toLowerCase(),
+          expected_departure: departureDate,
+          onboarding_status: progressStatus,
+
+          // optional system state
+          current_stage: startingStage,
+        },
+        { onConflict: 'user_id' }
+    )
+
+
+    if (profileError) throw profileError
       router.push('/dashboard')
     } catch (err: any) {
       alert(err.message)
