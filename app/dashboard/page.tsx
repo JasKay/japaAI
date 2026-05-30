@@ -344,7 +344,7 @@ export default function Dashboard() {
   if (!userData) return null
 
 const totalTasks = tasks.length
-const completedTasks = Array.from(userTasks.values()).filter((ut) => ut.status === 'completed').length
+const completedTasks = tasks.filter((t) => userTasks.get(t.id)?.status === 'completed').length
 const readinessPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
 
